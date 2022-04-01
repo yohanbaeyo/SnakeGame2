@@ -3,11 +3,9 @@ import java.awt.Graphics
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
-import Constants.Companion.CELL_SIZE;
 import Constants.Companion.CELL_HORIZONTAL_CNT;
 import Constants.Companion.CELL_VERTICAL_CNT;
-import Constants.Companion.height
-import Constants.Companion.width
+import javafx.geometry.Pos
 import java.awt.Dimension
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -16,21 +14,22 @@ class MainUI : JFrame("SnakeGame") {
     val snakeBody: ArrayDeque<Cell> = ArrayDeque()
     private val mainPanel = MainPanel(this)
     var tmpDirection = Direction.UP
-    private val isOccupied = Array(CELL_HORIZONTAL_CNT){
-        Array(CELL_VERTICAL_CNT){
-            false
-        }
+    private val isOccupied = Array(CELL_HORIZONTAL_CNT) {
+        Array(CELL_VERTICAL_CNT) { false }
     }
     private var remainPosition = HashSet<Position>()
-    lateinit var targetPosition: Position
+    lateinit var target: Cell
 
     private fun updateTarget() {
-        targetPosition = remainPosition.random()
-        remainPosition.remove(targetPosition)
+        if(!this::target.isInitialized) {
+            target = Cell(Position(-1,-1), CellType.TARGET)
+        }
+        target.position = remainPosition.random()
+        remainPosition.remove(target.position)
     }
 
     init {
-        snakeBody.addFirst(Cell(Position(CELL_HORIZONTAL_CNT/2, CELL_VERTICAL_CNT/2), SnakeCellType.HEAD, Direction.UP))
+        snakeBody.addFirst(Cell(Position(CELL_HORIZONTAL_CNT/2, CELL_VERTICAL_CNT/2), CellType.HEAD, Direction.UP, Direction.UP))
         isOccupied[CELL_HORIZONTAL_CNT/2][CELL_VERTICAL_CNT/2] = true
 
         for(i in 0 until CELL_HORIZONTAL_CNT) {
@@ -71,24 +70,24 @@ class MainUI : JFrame("SnakeGame") {
             Direction.LEFT -> Position(-1, 0)
             Direction.DOWN -> Position(0, 1)
             Direction.UP -> Position(0, -1)
+            Direction.NONE -> throw error("NONE shouldn't be a direction of snake body")
         }
 
-        if(tmpPos.isInBoundary(Position(0, 0), Position(CELL_HORIZONTAL_CNT, CELL_VERTICAL_CNT))
-            && !isOccupied[tmpPos.x][tmpPos.y]) {
-            snakeBody[0].type = SnakeCellType.BODY
-            /*mainUI.snakeBody[0].shape = when(mainUI.tmpDirection) {
-                Direction.LEFT ->
-            }*/
-            snakeBody.addFirst(Cell(tmpPos, SnakeCellType.HEAD, tmpDirection))
+        if(tmpPos.isInBoundary() && !isOccupied[tmpPos.x][tmpPos.y]) {
+
+            snakeBody[0].type = CellType.BODY
+            snakeBody[0].outputDirection = tmpDirection
+
+            snakeBody.addFirst(Cell(tmpPos, CellType.HEAD, tmpDirection, tmpDirection))
             isOccupied[tmpPos.x][tmpPos.y] = true
             remainPosition.remove(tmpPos)
 
-            if (targetPosition != tmpPos) {
+            if (target.position != tmpPos) {
                 isOccupied[snakeBody.last().position.x][snakeBody.last().position.y] = false
                 remainPosition.add(snakeBody.last().position)
 
                 snakeBody.removeLast()
-                snakeBody.last().type = SnakeCellType.END
+                snakeBody.last().type = CellType.END
             } else {
                 updateTarget()
             }
@@ -118,11 +117,11 @@ class MainUI : JFrame("SnakeGame") {
             g.color = Color.BLACK
 //            g.drawRect(1, 1, i*10, j*10)
             mainUI.snakeBody.forEach { cell ->
-                cell.position.drawCell(g)
+                cell.drawCell(g)
             }
 
             g.color = Color.RED
-            mainUI.targetPosition.drawCell(g)
+            mainUI.target.drawCell(g)
 //            g.fillRect(mainUI.targetPosition.x * CELL_SIZE, mainUI.targetPosition.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         }
 
