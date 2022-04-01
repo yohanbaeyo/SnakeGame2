@@ -1,10 +1,7 @@
 import Constants.Companion.CELL_HORIZONTAL_CNT
 import java.awt.Graphics
-import Constants.Companion.CELL_SIZE;
+import Constants.Companion.CELL_SIZE
 import Constants.Companion.CELL_VERTICAL_CNT
-import com.sun.corba.se.internal.Interceptors.PIORB
-import com.sun.org.apache.xpath.internal.operations.Bool
-import javafx.geometry.Pos
 
 enum class CellType {
     HEAD,BODY, END, TARGET
@@ -36,15 +33,5 @@ data class Cell(var position: Position, var type: CellType, var inputDirection: 
     }
     fun drawCell(g: Graphics) {
         g.fillRect(position.x * CELL_SIZE, position.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-    }
-}
-
-interface Constants {
-    companion object {
-        const val CELL_SIZE = 20
-        const val CELL_HORIZONTAL_CNT = 40
-        const val CELL_VERTICAL_CNT = 30
-        const val width = CELL_SIZE * CELL_HORIZONTAL_CNT
-        const val height = CELL_SIZE * CELL_VERTICAL_CNT
     }
 }

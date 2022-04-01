@@ -1,13 +1,5 @@
 fun main() {
-    val mainUI = MainUI()
-    var finished = false
-    var milliSecondsPerFrame: Long = 0
+    val gameController = GameController()
 
-    while(!finished) {
-        val (tmpFinished, tmpMilli) = mainUI.tick()
-        finished = tmpFinished
-        milliSecondsPerFrame= tmpMilli
-
-        Thread.sleep(milliSecondsPerFrame)
-    }
+    gameController.startGame()
 }
