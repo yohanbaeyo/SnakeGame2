@@ -6,6 +6,8 @@ import javax.swing.JPanel
 import Constants.Companion.CELL_SIZE;
 import Constants.Companion.CELL_HORIZONTAL_CNT;
 import Constants.Companion.CELL_VERTICAL_CNT;
+import Constants.Companion.height
+import Constants.Companion.width
 import java.awt.Dimension
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -13,13 +15,13 @@ import java.awt.event.KeyEvent
 class MainUI : JFrame("SnakeGame") {
     val snakeBody: ArrayDeque<Cell> = ArrayDeque()
     private val mainPanel = MainPanel(this)
-    var tmpDirection = Direction.UP;
+    var tmpDirection = Direction.UP
     private val isOccupied = Array(CELL_HORIZONTAL_CNT){
-        x -> Array(CELL_VERTICAL_CNT) {
-            y -> (x==CELL_HORIZONTAL_CNT/2 && y==CELL_VERTICAL_CNT/2)
+        Array(CELL_VERTICAL_CNT){
+            false
         }
     }
-    private var remainPosition = ArrayList<Position>()
+    private var remainPosition = HashSet<Position>()
     lateinit var targetPosition: Position
 
     private fun updateTarget() {
@@ -54,7 +56,9 @@ class MainUI : JFrame("SnakeGame") {
         })
 
 //        setSize(814, 636)
-        size = Dimension(Constants.width, Constants.height)
+//        size = Dimension(Constants.width, Constants.height)
+        rootPane.preferredSize = Dimension(Constants.width, Constants.height)
+        pack()
         add(mainPanel)
         isVisible = true
 
@@ -100,8 +104,8 @@ class MainUI : JFrame("SnakeGame") {
         }
     }
 
-    class MainPanel(val mainUI: MainUI): JPanel() {
-        val frameRateLabel = JLabel("")
+    class MainPanel(private val mainUI: MainUI): JPanel() {
+        private val frameRateLabel = JLabel("")
 
         init {
             add(frameRateLabel)
@@ -114,11 +118,12 @@ class MainUI : JFrame("SnakeGame") {
             g.color = Color.BLACK
 //            g.drawRect(1, 1, i*10, j*10)
             mainUI.snakeBody.forEach { cell ->
-                cell.drawCell(g)
+                cell.position.drawCell(g)
             }
 
             g.color = Color.RED
-            g.fillRect(mainUI.targetPosition.x * CELL_SIZE, mainUI.targetPosition.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+            mainUI.targetPosition.drawCell(g)
+//            g.fillRect(mainUI.targetPosition.x * CELL_SIZE, mainUI.targetPosition.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         }
 
         fun modifyLabelText(milliSecondsPerFrame: Long) {

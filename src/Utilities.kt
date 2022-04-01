@@ -15,13 +15,13 @@ data class Position(var x: Int, var y: Int) {
     }
 
     fun isInBoundary(p1: Position, p2: Position) = (p1.x<=x && x<p2.x && p1.y<=y && y<p2.y)
-}
 
-data class Cell(var position: Position, var type: SnakeCellType, var direction: Direction) {
     fun drawCell(g: Graphics) {
-        g.fillRect(position.x * CELL_SIZE, position.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+        g.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
     }
 }
+
+data class Cell(var position: Position, var type: SnakeCellType, var direction: Direction)
 
 interface Constants {
     companion object {
