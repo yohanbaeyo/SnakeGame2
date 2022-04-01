@@ -1,5 +1,5 @@
 fun main() {
     val gameController = GameController()
 
-    gameController.startGame()
+    println("Press R to Begin the Game.")
 }

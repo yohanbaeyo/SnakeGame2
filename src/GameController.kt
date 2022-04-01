@@ -9,23 +9,24 @@ import java.awt.event.KeyEvent
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.math.exp
 
 
 class GameController : JFrame("SnakeGame"){
     private val mainPanel = MainPanel()
     private val uiController = UIController()
+    private var gameThread = Thread(GameThread())
 
-    private lateinit var tmpDirection : Direction
+    private var tmpDirection = Direction.NONE
     private val snakeBody: ArrayDeque<Cell> = ArrayDeque()
     private val isOccupied = Array(CELL_HORIZONTAL_CNT) {
         Array(CELL_VERTICAL_CNT) { false }
     }
     private val remainPosition = HashSet<Position>()
     private val target = Cell(Position(-1, -1), CellType.TARGET)
-    var milliSecondsPerFrame: Long = 400
-    var finished = false
 
-    var gameThread = Thread(GameThread())
+    var milliSecondsPerFrame: Long = 400
+    var finished = true
 
     private fun updateTarget() {
         target.position = remainPosition.random()
@@ -93,6 +94,8 @@ class GameController : JFrame("SnakeGame"){
                 }
             }
         })
+
+        mainPanel.modifyLabelText("Press R to Begin Game.")
     }
 
     private fun tick(): Pair<Boolean, Long> {
@@ -124,7 +127,7 @@ class GameController : JFrame("SnakeGame"){
             } else {
                 updateTarget()
             }
-            milliSecondsPerFrame = (350/Math.exp((snakeBody.size-1).toDouble()/20)+ 50).toLong()
+            milliSecondsPerFrame = (350/ exp((snakeBody.size-1).toDouble()/20) + 50).toLong()
 
             uiController.updateScreen()
 
