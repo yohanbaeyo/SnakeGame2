@@ -1,11 +1,18 @@
 import Constants.Companion.CELL_HORIZONTAL_CNT
 import Constants.Companion.CELL_VERTICAL_CNT
+import javafx.application.Application.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.io.File
+import java.io.FileInputStream
+import java.util.Scanner
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -15,7 +22,8 @@ import kotlin.math.exp
 class GameController : JFrame("SnakeGame"){
     private val mainPanel = MainPanel()
     private val uiController = UIController()
-    private var gameThread = Thread(GameThread())
+    private val scoreController = ScoreController()
+    private lateinit var gameThread: Thread
 
     private var tmpDirection = Direction.NONE
     private val snakeBody: ArrayDeque<Cell> = ArrayDeque()
@@ -27,6 +35,7 @@ class GameController : JFrame("SnakeGame"){
 
     var milliSecondsPerFrame: Long = 400
     var finished = true
+    private var score = 0
 
     private fun updateTarget() {
         target.position = remainPosition.random()
@@ -54,9 +63,11 @@ class GameController : JFrame("SnakeGame"){
 
         updateTarget()
         finished = false
+        score = 0
     }
 
     fun startGame() {
+        gameThread = Thread(GameThread())
         gameThread.start()
     }
 
@@ -69,6 +80,8 @@ class GameController : JFrame("SnakeGame"){
 
             Thread.sleep(milliSecondsPerFrame)
         }
+        score = snakeBody.size
+        println(score)
     }
 
     init {
@@ -80,8 +93,7 @@ class GameController : JFrame("SnakeGame"){
                     if(!finished) {
                         initializeGame()
                     } else {
-                        gameThread = Thread(GameThread())
-                        gameThread.start()
+                        startGame()
                     }
                     return
                 }
@@ -191,6 +203,33 @@ class GameController : JFrame("SnakeGame"){
     inner class GameThread : Runnable {
         override fun run() {
             gameLoop()
+        }
+    }
+
+    inner class ScoreController {
+        private var currentScore = 0L
+        private var bestScore: Long = -1
+        private var latestScore: Long = -1
+
+        fun loadRecord() {
+            val recordFile = javaClass.getResourceAsStream("data.dat") ?: throw error("File Not Found")
+            val scanner = Scanner(recordFile)
+
+            latestScore = scanner.nextLong()
+            bestScore = scanner.nextLong()
+
+            println(latestScore)
+            println(bestScore)
+        }
+
+        fun updateScore(currentScore: Long) {
+            this.currentScore = currentScore
+        }
+
+        init {
+            CoroutineScope(Dispatchers.IO).launch {
+                loadRecord()
+            }
         }
     }
 }
