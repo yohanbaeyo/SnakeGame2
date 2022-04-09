@@ -8,7 +8,17 @@ enum class CellType {
 }
 
 enum class Direction {
-    LEFT, RIGHT, DOWN, UP, NONE
+    LEFT, RIGHT, DOWN, UP, NONE;
+
+    fun isOpposite(other: Direction): Boolean {
+        return when(other) {
+            LEFT -> this==RIGHT;
+            RIGHT -> this==LEFT;
+            DOWN -> this==UP;
+            UP -> this==DOWN;
+            NONE -> false;
+        }
+    }
 }
 
 data class Position(var x: Int, var y: Int) {

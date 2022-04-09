@@ -1,32 +1,28 @@
 import Constants.Companion.CELL_HORIZONTAL_CNT
 import Constants.Companion.CELL_VERTICAL_CNT
-import javafx.application.Application.launch
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.io.File
-import java.io.FileInputStream
+import java.io.FileWriter
 import java.util.Scanner
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.math.exp
+import kotlin.math.max
 
 
 class GameController : JFrame("SnakeGame"){
     private val mainPanel = MainPanel()
     private val uiController = UIController()
     private val scoreController = ScoreController()
-    private lateinit var gameThread: Thread
 
     private var tmpDirection = Direction.NONE
-    private val snakeBody: ArrayDeque<Cell> = ArrayDeque()
+    private val snakeBody = ArrayDeque<Cell>()
     private val isOccupied = Array(CELL_HORIZONTAL_CNT) {
         Array(CELL_VERTICAL_CNT) { false }
     }
@@ -67,24 +63,31 @@ class GameController : JFrame("SnakeGame"){
     }
 
     fun startGame() {
-        gameThread = Thread(GameThread())
-        gameThread.start()
+        CoroutineScope(Dispatchers.IO).launch {
+            gameLoop()
+        }
     }
 
-    private fun gameLoop() {
+    private suspend fun  gameLoop() {
         initializeGame()
         while(!finished) {
             val (tmpFinished, tmpMilli) = tick()
             finished = tmpFinished
             milliSecondsPerFrame= tmpMilli
 
-            Thread.sleep(milliSecondsPerFrame)
+            delay(milliSecondsPerFrame)
         }
         score = snakeBody.size
         println(score)
+        scoreController.updateScore()
+        scoreController.scoreShow("Game Over!")
     }
 
     init {
+        CoroutineScope(Dispatchers.IO).launch {
+            scoreController.loadRecord()
+        }
+
         addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent?) {
                 if(e==null) return
@@ -145,8 +148,6 @@ class GameController : JFrame("SnakeGame"){
 
             return false to milliSecondsPerFrame
         } else {
-
-            mainPanel.modifyLabelText("Game Over!")
             return true to 0
         }
     }
@@ -181,55 +182,61 @@ class GameController : JFrame("SnakeGame"){
             super.paintComponent(g)
             if (g == null) return
 
-            g.color = Color.BLACK
+            g.color = Color.GRAY
 //            g.drawRect(1, 1, i*10, j*10)
             snakeBody.forEach { cell ->
                 cell.drawCell(g)
             }
 
-            g.color = Color.RED
+            g.color = Color(241,109,109)
             target.drawCell(g)
 //            g.fillRect(mainUI.targetPosition.x * CELL_SIZE, mainUI.targetPosition.y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
         }
 
         fun modifyLabelText() {
-            frameRateLabel.text = String.format("BlockPerSecond: %.3f", 1000/milliSecondsPerFrame.toDouble())
+            frameRateLabel.text = String.format("BPS: %.1f", 1000/milliSecondsPerFrame.toDouble())
         }
         fun modifyLabelText(newText: String) {
             frameRateLabel.text = newText
         }
     }
 
-    inner class GameThread : Runnable {
-        override fun run() {
-            gameLoop()
-        }
-    }
-
     inner class ScoreController {
-        private var currentScore = 0L
-        private var bestScore: Long = -1
-        private var latestScore: Long = -1
+        private var bestScore = -1
+        private var latestScore = -1
 
         fun loadRecord() {
-            val recordFile = javaClass.getResourceAsStream("data.dat") ?: throw error("File Not Found")
-            val scanner = Scanner(recordFile)
+//            val recordFile = javaClass.getResourceAsStream("data.dat") ?: throw error("File Not Found")
+//            println(javaClass.getResource("data.dat").path)
+//            println(javaClass.getResource("data.dat").path)
+            val scanner = Scanner((javaClass.getResourceAsStream("data.dat") ?: throw error("File Not Found")))
 
-            latestScore = scanner.nextLong()
-            bestScore = scanner.nextLong()
+            latestScore = scanner.nextInt()
+            bestScore = scanner.nextInt()
 
             println(latestScore)
             println(bestScore)
+
+            scanner.close()
         }
 
-        fun updateScore(currentScore: Long) {
-            this.currentScore = currentScore
+        fun updateScore() {
+            this.latestScore = score
+            this.bestScore = max(this.bestScore, score)
+
+//            val writer = DataOutputStream(FileOutputStream((javaClass.getResource("data.dat")?:throw error("File Not Found")).path))
+//
+            val writer = FileWriter(javaClass.getResource("data.dat")?.path.toString())
+
+            writer.write(score.toString())
+            writer.write("\n")
+            writer.write(bestScore.toString())
+
+            writer.close()
         }
 
-        init {
-            CoroutineScope(Dispatchers.IO).launch {
-                loadRecord()
-            }
+        fun scoreShow(prefix: String) {
+            mainPanel.modifyLabelText(prefix + " (latest score: ${latestScore}, best score: ${bestScore})")
         }
     }
 }
